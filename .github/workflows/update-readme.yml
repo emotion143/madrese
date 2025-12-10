@@ -1,0 +1,26 @@
+name: Update README structure
+on:
+  push:
+    branches: [ main ]
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate tree
+        run: |
+          echo "## Actuele mappenstructuur (automatisch bijgewerkt op $(date -u '+%Y-%m-%d %H:%M UTC'))" >> structure.tmp
+          echo '```' >> structure.tmp
+          tree -a --dirsfirst -L 4 | head -n -2 >> structure.tmp
+          echo '```' >> structure.tmp
+      - name: Update README
+        run: |
+          sed -i '/<!-- AUTO-TREE-START -->/,/<!-- AUTO-TREE-END -->/c\<!-- AUTO-TREE-START -->\n'"$(cat structure.tmp)"'\n<!-- AUTO-TREE-END -->' README.md
+          rm structure.tmp
+      - name: Commit & push if changed
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add README.md
+          git commit -m "chore: update repo structure (auto)" || exit 0
+          git push
