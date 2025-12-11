@@ -1,26 +1,40 @@
 name: Update README structure
+
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
+
 jobs:
-  update:
+  update-readme:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install tree
+        run: sudo apt-get update && sudo apt-get install -y tree
+
       - name: Generate tree
         run: |
-          echo "## Actuele mappenstructuur (automatisch bijgewerkt op $(date -u '+%Y-%m-%d %H:%M UTC'))" >> structure.tmp
-          echo '```' >> structure.tmp
-          tree -a --dirsfirst -L 4 | head -n -2 >> structure.tmp
-          echo '```' >> structure.tmp
-      - name: Update README
+          echo "## Actuele mappenstructuur (automatisch bijgewerkt op $(date -u '+%Y-%m-%d %H:%M UTC'))" > tree.md
+          echo '```text' >> tree.md
+          tree -a --dirsfirst -L 4 --charset=ascii . | grep -v "/\." | head -n -2 >> tree.md
+          echo '```' >> tree.md
+
+      - name: Update README.md (veilige versie)
         run: |
-          sed -i '/<!-- AUTO-TREE-START -->/,/<!-- AUTO-TREE-END -->/c\<!-- AUTO-TREE-START -->\n'"$(cat structure.tmp)"'\n<!-- AUTO-TREE-END -->' README.md
-          rm structure.tmp
-      - name: Commit & push if changed
+          # Gebruik een tijdelijk bestand en awk in plaats van sed (veel robuuster)
+          awk '
+            /<!-- AUTO-TREE-START -->/ { print; system("cat tree.md"); next }
+            /<!-- AUTO-TREE-END -->/ { next }
+            { print }
+          ' README.md > README.tmp && mv README.tmp README.md
+
+      - name: Commit & push als README is gewijzigd
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add README.md
-          git commit -m "chore: update repo structure (auto)" || exit 0
-          git push
+          git commit -m "chore: update repo structure (auto)" || echo "No changes"
+          git push || echo "Nothing to push"
