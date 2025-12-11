@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write   # ← dit fixt de 403-fout
+  contents: write   # nodig om te mogen pushen
 
 jobs:
   update-readme:
@@ -18,31 +18,35 @@ jobs:
       - name: Install tree
         run: sudo apt-get update && sudo apt-get install -y tree
 
-      - name: Generate tree
+      - name: Generate clean tree (geen .git & tree.md
         run: |
           {
             echo "## Actuele mappenstructuur (automatisch bijgewerkt op $(date -u '+%Y-%m-%d %H:%M UTC'))"
             echo ""
             echo '```text'
-            tree -a --dirsfirst -L 4 --charset=ascii . | grep -v '/\.' | head -n -2
+            tree --dirsfirst -L 4 --charset=ascii -I '.git|tree.md|*.tmp' .
             echo '```'
           } > tree.md
 
       - name: Update README.md
         run: |
           awk '
-            /<!-- AUTO-TREE-START -->/ { print; system("cat tree.md"); skip=1; next }
-            /<!-- AUTO-TREE-END -->/ { skip=0; next }
+            /<!-- AUTO-TREE-START -->/ {
+              print; system("cat tree.md"); skip=1; next
+            }
+            /<!-- AUTO-TREE-END -->/ {
+              skip=0; next
+            }
             !skip { print }
-          ' README.md > tmp && mv tmp README.md
+          ' README.md > README.tmp && mv README.tmp README.md
 
-      - name: Commit & push if changed
+      - name: Commit & push als er iets veranderd is
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "actions@github.com"
           git add README.md
           if git diff-index --quiet HEAD --; then
-            echo "Geen wijzigingen"
+            echo "README niet veranderd → niets te doen"
           else
             git commit -m "chore: update repo structure (auto)"
             git push
