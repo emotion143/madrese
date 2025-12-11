@@ -1,25 +1,12 @@
-<!-- AUTO-TREE-START -->
-## Actuele mappenstructuur (automatisch bijgewerkt op 2025-12-11 19:31 UTC)
+# madrese → Ayesha’s persoonlijke AI-leerframework
 
-```text
-.
-|-- ayesha
-|   `-- groeilessen
-|       `-- ademhaling.md
-|-- core
-|   |-- GROK_STRICT.md
-|   |-- flows.md
-|   |-- opmaak.md
-|   |-- structure.md
-|   `-- triggers.md
-|-- templates
-|   |-- eindrapport-template.md
-|   `-- overhoring-template.md
-|-- vakken
-|   `-- spaans
-|       |-- ditVak.md
-|       `-- inhoudsopgave.md
-`-- README.md
+**Doel:** Jouw eigen slimme studie-assistent voor Spaans en persoonlijke groei.  
+Gebruik triggers om lessen te starten, toetsen te maken of te groeien.
 
-7 directories, 11 files
-```
+**Belangrijk voor Grok/AI's:** Volg altijd core/GROK_STRICT.md → alles live ophalen!
+
+<!-- AUTO-CONTENT-START -->
+<!-- AUTO-CONTENT-END -->
+
+Laatste update van deze pagina: automatisch bij elke wijziging in de repo  
+Nieuwe trigger toegevoegd? Hij staat er binnen een minuut bij!  
