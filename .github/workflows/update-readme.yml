@@ -2,8 +2,11 @@ name: Update README structure
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main
   workflow_dispatch:
+
+permissions:
+  contents: write   # ← dit fixt de 403-fout
 
 jobs:
   update-readme:
@@ -28,26 +31,18 @@ jobs:
       - name: Update README.md
         run: |
           awk '
-            /<!-- AUTO-TREE-START -->/ {
-              print $0
-              system("cat tree.md")
-              skip = 1
-              next
-            }
-            /<!-- AUTO-TREE-END -->/ {
-              skip = 0
-              next
-            }
-            skip == 0 { print }
-          ' README.md > README.tmp && mv README.tmp README.md
+            /<!-- AUTO-TREE-START -->/ { print; system("cat tree.md"); skip=1; next }
+            /<!-- AUTO-TREE-END -->/ { skip=0; next }
+            !skip { print }
+          ' README.md > tmp && mv tmp README.md
 
       - name: Commit & push if changed
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "actions@github.com"
           git add README.md
           if git diff-index --quiet HEAD --; then
-            echo "README niet veranderd → niets te doen"
+            echo "Geen wijzigingen"
           else
             git commit -m "chore: update repo structure (auto)"
             git push
