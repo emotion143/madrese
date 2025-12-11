@@ -17,45 +17,37 @@ jobs:
 
       - name: Generate tree
         run: |
-          echo "## Actuele mappenstructuur (automatisch bijgewerkt op $(date -u '+%Y-%m-%d %H:%M UTC'))" > tree.md
-          echo '```text
-          tree -a --dirsfirst -L 4 --charset=ascii . | grep -v '/\.' | head -n -2 >> tree.md
-          echo '```' >> tree.md
-          # Debug: toon wat er gegenereerd is (verwijder later als het werkt)
-          echo '--- DEBUG: Generated tree.md ---'
-          cat tree.md
-          echo '--- END DEBUG ---'
+          {
+            echo "## Actuele mappenstructuur (automatisch bijgewerkt op $(date -u '+%Y-%m-%d %H:%M UTC'))"
+            echo ""
+            echo '```text'
+            tree -a --dirsfirst -L 4 --charset=ascii . | grep -v '/\.' | head -n -2
+            echo '```'
+          } > tree.md
 
-      - name: Update README.md (veilige versie met triple backticks)
+      - name: Update README.md
         run: |
-          # Backup README
-          cp README.md README.backup
-          # Gebruik awk om alles tussen de markers te vervangen
           awk '
-            /<!-- AUTO-TREE-START -->/ { 
-              print; 
-              system("cat tree.md"); 
-              while (getline < "README.md") {
-                if (/<!-- AUTO-TREE-END -->/) break;
-              }
-              next 
+            /<!-- AUTO-TREE-START -->/ {
+              print $0
+              system("cat tree.md")
+              skip = 1
+              next
             }
-            /<!-- AUTO-TREE-END -->/ { next }
-            { print }
+            /<!-- AUTO-TREE-END -->/ {
+              skip = 0
+              next
+            }
+            skip == 0 { print }
           ' README.md > README.tmp && mv README.tmp README.md
-          # Debug: toon diff (verwijder later)
-          echo '--- DEBUG: Changes to README ---'
-          git diff README.backup README.md || echo "No visible changes"
-          echo '--- END DEBUG ---'
-          rm tree.md README.backup
 
-      - name: Commit & push als README is gewijzigd
+      - name: Commit & push if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add README.md
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
+          if git diff-index --quiet HEAD --; then
+            echo "README niet veranderd → niets te doen"
           else
             git commit -m "chore: update repo structure (auto)"
             git push
