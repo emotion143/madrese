@@ -1,4 +1,4 @@
-name: Update README structure
+name: Update README (structuur + triggers)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write   # nodig om te mogen pushen
+  contents: write
 
 jobs:
   update-readme:
@@ -18,7 +18,7 @@ jobs:
       - name: Install tree
         run: sudo apt-get update && sudo apt-get install -y tree
 
-      - name: Generate clean tree (geen .git & tree.md
+      - name: Generate content for README
         run: |
           {
             echo "## Actuele mappenstructuur (automatisch bijgewerkt op $(date -u '+%Y-%m-%d %H:%M UTC'))"
@@ -26,15 +26,23 @@ jobs:
             echo '```text'
             tree --dirsfirst -L 4 --charset=ascii -I '.git|tree.md|*.tmp' .
             echo '```'
-          } > tree.md
+            echo ""
+            echo ""
+            echo "## Triggers (altijd actueel uit core/triggers.md)"
+            echo ""
+            echo '```text'
+            # Haal alleen de regels met → uit core/triggers.md en maak nette tabel
+            grep "→" core/triggers.md | sed 's/^\([^ ]*\) *→/\1 →/' | sed 's/^/  /'
+            echo '```'
+          } > auto-content.md
 
       - name: Update README.md
         run: |
           awk '
-            /<!-- AUTO-TREE-START -->/ {
-              print; system("cat tree.md"); skip=1; next
+            /<!-- AUTO-CONTENT-START -->/ {
+              print; system("cat auto-content.md"); skip=1; next
             }
-            /<!-- AUTO-TREE-END -->/ {
+            /<!-- AUTO-CONTENT-END -->/ {
               skip=0; next
             }
             !skip { print }
@@ -48,6 +56,6 @@ jobs:
           if git diff-index --quiet HEAD --; then
             echo "README niet veranderd → niets te doen"
           else
-            git commit -m "chore: update repo structure (auto)"
+            git commit -m "chore: update README – structuur + triggers (auto)"
             git push
           fi
